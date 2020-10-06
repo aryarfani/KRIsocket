@@ -152,7 +152,7 @@ def otomatis():
             print("jarak_gawang = " + str(int(jarak_gawang)))
 
             # * jika radius lebih dari X
-            if radius > 2:
+            if radius > 7:
                 is_gawang_found = True
 
                 # menggambar lingkaran
@@ -205,7 +205,7 @@ def otomatis():
 
             # only proceed if the radius meets a minimum size
             # print("radius :", radius)
-            if radius > 2:
+            if radius > 3:
                 is_ball_found = True
                 # draw the circle and centroid on the frame,
                 # then update the list of tracked points
@@ -282,9 +282,9 @@ def otomatis():
         if STEP_ROBOT == 0:
             print('STEP_ROBOT = 0')
 
-            t_end = time.time() + 2.4
+            t_end = time.time() + 2.7
             while time.time() < t_end:
-                setMotor(0, -100, 160)
+                setMotor(45, -100, 160)
 
             setMotor()
             # break
@@ -301,8 +301,8 @@ def otomatis():
 
                 if (ballX > 300 and ballX < 330):
                     # lek wes oleh bal mandek
-                    if ballY >= 150 and ballY < 155:
-                        setMotor()
+                    if jarak_ball >= 150:
+                        setMotor(150, 150)
                     else:
                         setMotor(move_speed / 2, move_speed / 2)
 
@@ -323,18 +323,18 @@ def otomatis():
 
             elif is_ball_catch:
                 # * madep bolo'
-                if (boloX > 300 and boloX < 330):
+                if (boloX > 310 and boloX < 320):
                     # lek wes madep bolo tendang
                     setMotor()
-                    time.sleep(0.5)
+                    time.sleep(0.3)
                     tendang(1)
                     STEP_ROBOT = 2
 
                 # belok kiri
-                elif boloX < 300:
+                elif boloX < 310:
                     setMotor(0, 0, 70)
                 # belok kanan
-                elif boloX > 330:
+                elif boloX > 320:
                     setMotor(0, 0, -70)
 
         # * jalankan STEP_ROBOT 2
@@ -342,9 +342,9 @@ def otomatis():
         elif STEP_ROBOT == 2:
             print('STEP_ROBOT = 2')
 
-            t_end = time.time() + 2
+            t_end = time.time() + 2.3
             while time.time() < t_end:
-                setMotor(-120, 0, -160)
+                setMotor(-110, 0, -160)
 
             setMotor()
 
@@ -357,20 +357,19 @@ def otomatis():
 
             if is_ball_found:
                 # * madep ball
-                if (ballX > 300 and ballX < 330):
+                if (ballX > 310 and ballX < 320):
                     # ngirim ping
                     print('kirim ping')
                     setMotor()
-                    # time.sleep(1)
-                    # kirim('UMPANTENDANG')
+
                     STEP_ROBOT = 4
 
                 # belok kiri
-                elif ballX < 300:
-                    setMotor(0, 0, 70)
+                elif ballX < 310:
+                    setMotor(0, 70, 20)
                 # belok kanan
-                elif ballX > 330:
-                    setMotor(0, 0, -70)
+                elif ballX > 320:
+                    setMotor(70, 0, -20)
 
             else:
                 setMotor()
@@ -385,7 +384,7 @@ def otomatis():
             if is_ball_found and is_ball_catch is False:
                 print('STEP_ROBOT = 4 is_ball_found and is_ball_catch is False')
 
-                if ballX > 300 and ballX < 330:
+                if ballX > 300 and ballX < 320:
                     # lek wes oleh bal mandek
                     if is_ball_close:
                         setMotor(move_speed / 2, move_speed / 2)
@@ -395,7 +394,7 @@ def otomatis():
                 elif ballX < 300:
                     setMotor(0, 70, 20)
                     # belok kanan
-                elif ballX > 330:
+                elif ballX > 320:
                     setMotor(70, 0, -20)
             elif is_ball_catch:
                 setMotor()
@@ -409,18 +408,20 @@ def otomatis():
             print('STEP_ROBOT = 5')
 
             if is_ball_catch and is_gawang_found:
-                if (gawangX > 300 and gawangX < 330):
+                if (gawangX > 305 and gawangX < 325):
                     print("tendang")
                     tendang()
+                    # kembali ke step 4
+                    STEP_ROBOT = 4
                     stop()
 
                     #! TERMINATION
                     # break
 
-                elif gawangX > 330:
+                elif gawangX > 325:
                     print("menggok kanan")
                     setMotor(0, 0, -70)
-                elif gawangX < 300:
+                elif gawangX < 305:
                     print("menggok kiri")
                     setMotor(0, 0, 70)
                 else:
@@ -430,6 +431,12 @@ def otomatis():
                     print("Kompas = ", getKompas())
             else:
                 setMotor()
+
+        # * Jalankan STEP_ROBOT 99
+        # idle
+        elif STEP_ROBOT == 99:
+            print('STEP_ROBOT = 5')
+            stop()
 
         #!---------- PROGRAM ROBOT ENDS HERE ----------
 
@@ -448,19 +455,25 @@ def otomatis():
         try:
             new_message = client.recv(SIZE).decode(ENCODING)
             if new_message:
-                if new_message == 'reauto':
+                if new_message == 'auto':
                     # ResetStep
                     kirim('P:REAUTO')
-                    # CODE
-                elif new_message == 'retrycv':
+                    STEP_ROBOT = 0
+
+                elif new_message == 'retry':
                     # AllMotorStop
                     kirim('P:RETRYCV')
-                    # CODE
+                    resetTendang()
+
+                    STEP_ROBOT = 99
+
                 elif new_message == 'LETSMOVE':
                     # HANDLE KONDISI SAAT FORWADING
                     print('HANDLE')
                 else:
                     # DESTROYCV
+                    cv2.destroyAllWindows()
+                    # break
                     return new_message
         except BlockingIOError:
             pass
